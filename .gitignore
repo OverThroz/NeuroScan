@@ -1,9 +1,25 @@
-*.a
-*.lib
+# Compiled objects
 *.o
-*.obj
-*.out
+*.a
+*.so
 
-.idea/
+# Executables
+/solver
+/test_solver
+/tools/solver_main
+/tools/nn_poc
+/tools/nn_train
+/tools/gui_main
+/src/solver/test3
+
+# Build artifacts
+build/
+
+# Editor / OS
+.DS_Store
+*.swp
 *~
-*.DotSettings.user
+.vscode/
+
+# NOTE: les fichiers "trsh" sont VOLONTAIREMENT versionnés
+# comme placeholders pour préserver l'arborescence vide dans Git.

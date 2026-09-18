@@ -1,34 +1,60 @@
-# Makefile pour le projet OCR Word Search Solver (EPITA SAÉ S3)
+# Makefile for the OCR Word Search Solver project (EPITA SAE S3)
 #
-# Contraintes du Cahier des Charges :
-# - Langage C avec compilation sans erreur sous -Wall -Wextra
-# - Règles obligatoires : all, clean
+# Constraints from the spec:
+# - C language, compiles without error with -Wall -Wextra
+# - Mandatory rules: all, clean
 
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -O2 -g
+CC      = cc
+CFLAGS  = -std=c11 -Wall -Wextra -Werror -pedantic -O2 -g -Iinclude
 LDFLAGS =
+
+ifeq ($(ASAN),1)
+CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -O0
+LDFLAGS += -fsanitize=address
+endif
 
 SRC_DIR = src
 OBJ_DIR = obj
 
-# Exécutable CLI pour la première soutenance
-SOLVER\_BIN = solver
-SOLVER\_SRC = $(SRC\_DIR)/solver.c
-SOLVER\_OBJ = $(OBJ\_DIR)/solver.o
+# Common objects used by both solver and test_solver
+COMMON_SRC = $(SRC_DIR)/solver/grid.c \
+             $(SRC_DIR)/solver/wordlist.c \
+             $(SRC_DIR)/solver/solver.c
+COMMON_OBJ = $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-.PHONY: all clean
+SOLVER_BIN = solver
+SOLVER_OBJ = $(OBJ_DIR)/tools/solver_main.o
 
-all: $(SOLVER\_BIN)
+TEST_BIN   = test_solver
+TEST_OBJ   = $(OBJ_DIR)/tests/test_solver.o
 
-# Règle de compilation de l'exécutable solver
-$(SOLVER\_BIN): $(SOLVER\_OBJ)
+.PHONY: all clean test
+
+all: $(SOLVER_BIN)
+
+$(SOLVER_BIN): $(COMMON_OBJ) $(SOLVER_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-	
-# Règle générique pour les fichiers objets (.o)
-$(OBJ\_DIR)/%.o: $(SRC\_DIR)/%.c
-	@mkdir -p $(OBJ\_DIR)
+
+$(TEST_BIN): $(COMMON_OBJ) $(TEST_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Generic rule for objects under src/
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Nettoyage des objets et de l'exécutable
+# Objects under tools/
+$(OBJ_DIR)/tools/%.o: tools/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Objects under tests/
+$(OBJ_DIR)/tests/%.o: tests/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
 clean:
-	rm -rf $(OBJ\_DIR) $(SOLVER\_BIN)
+	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(TEST_BIN)
