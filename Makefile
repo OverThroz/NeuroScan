@@ -36,9 +36,12 @@ TEST_RECON_OBJ = $(OBJ_DIR)/tests/test_reconstruction.o
 TEST_RENDER_BIN = test_render
 TEST_RENDER_OBJ = $(OBJ_DIR)/tests/test_render.o
 
+PIPELINE_BIN = pipeline_demo
+PIPELINE_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
+
 .PHONY: all clean test
 
-all: $(SOLVER_BIN)
+all: $(SOLVER_BIN) $(PIPELINE_BIN)
 
 $(SOLVER_BIN): $(COMMON_OBJ) $(SOLVER_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -50,6 +53,9 @@ $(TEST_RECON_BIN): $(COMMON_OBJ) $(TEST_RECON_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(TEST_RENDER_BIN): $(COMMON_OBJ) $(TEST_RENDER_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(PIPELINE_BIN): $(COMMON_OBJ) $(PIPELINE_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Generic rule for objects under src/
@@ -73,4 +79,4 @@ test: $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN)
 	./$(TEST_RENDER_BIN)
 
 clean:
-	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN)
+	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(PIPELINE_BIN)
