@@ -6,6 +6,9 @@
 # Executables
 /solver
 /test_solver
+/test_reconstruction
+/test_render
+/pipeline_demo
 /tools/solver_main
 /tools/nn_poc
 /tools/nn_train
