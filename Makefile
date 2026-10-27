@@ -5,8 +5,11 @@
 # - Mandatory rules: all, clean
 
 CC      = cc
-CFLAGS  = -std=c11 -Wall -Wextra -Werror -pedantic -O2 -g -Iinclude
+CFLAGS  = -std=c11 -Wall -Wextra -Werror -pedantic -O2 -g -Iinclude $(SDL_CFLAGS)
 LDFLAGS = -lm
+SDL_CFLAGS = $(shell pkg-config --cflags sdl2 SDL2_image)
+SDL_LDFLAGS = $(shell pkg-config --libs sdl2 SDL2_image)
+
 
 ifeq ($(ASAN),1)
 CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -O0
@@ -24,8 +27,15 @@ COMMON_SRC = $(SRC_DIR)/solver/grid.c \
              $(SRC_DIR)/solver/render.c
 COMMON_OBJ = $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
+IMAGE_SRC = $(SRC_DIR)/utils/image.c \
+            $(SRC_DIR)/preprocessing/preprocessing.c
+IMAGE_OBJ = $(IMAGE_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
 SOLVER_BIN = solver
 SOLVER_OBJ = $(OBJ_DIR)/tools/solver_main.o
+
+IMAGE_SRC = image
+IMAGE_OBJ =  $(OBJ_DIR)/src/utils/image.o
 
 TEST_BIN   = test_solver
 TEST_OBJ   = $(OBJ_DIR)/tests/test_solver.o
