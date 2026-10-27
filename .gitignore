@@ -26,3 +26,5 @@ build/
 
 # NOTE: les fichiers "trsh" sont VOLONTAIREMENT versionnés
 # comme placeholders pour préserver l'arborescence vide dans Git.
+
+.token
