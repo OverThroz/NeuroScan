@@ -30,12 +30,10 @@ COMMON_OBJ = $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 IMAGE_SRC = $(SRC_DIR)/utils/image.c \
             $(SRC_DIR)/preprocessing/preprocessing.c
 IMAGE_OBJ = $(IMAGE_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+# Object files derived from IMAGE_SRC: src/<path>.c -> obj/<path>.o
 
 SOLVER_BIN = solver
 SOLVER_OBJ = $(OBJ_DIR)/tools/solver_main.o
-
-IMAGE_SRC = image
-IMAGE_OBJ =  $(OBJ_DIR)/src/utils/image.o
 
 TEST_BIN   = test_solver
 TEST_OBJ   = $(OBJ_DIR)/tests/test_solver.o
@@ -45,6 +43,9 @@ TEST_RECON_OBJ = $(OBJ_DIR)/tests/test_reconstruction.o
 
 TEST_RENDER_BIN = test_render
 TEST_RENDER_OBJ = $(OBJ_DIR)/tests/test_render.o
+
+PREPROCESS_BIN = preprocess
+PREPROCESS_OBJ = $(OBJ_DIR)/tools/preprocess_main.o
 
 PIPELINE_BIN = pipeline_demo
 PIPELINE_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
@@ -68,6 +69,9 @@ $(TEST_RENDER_BIN): $(COMMON_OBJ) $(TEST_RENDER_OBJ)
 $(PIPELINE_BIN): $(COMMON_OBJ) $(PIPELINE_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+$(PREPROCESS_BIN): $(IMAGE_OBJ) $(PREPROCESS_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(SDL_LDFLAGS)
+
 # Generic rule for objects under src/
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
@@ -89,4 +93,4 @@ test: $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN)
 	./$(TEST_RENDER_BIN)
 
 clean:
-	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(PIPELINE_BIN)
+	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(PIPELINE_BIN) $(PREPROCESS_BIN)
