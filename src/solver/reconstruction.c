@@ -1,7 +1,7 @@
 #include "reconstruction.h"
 #include <stdlib.h>
 
-Grid *reconstruction_build_grid(char **matrix, int rows, int cols)
+Grid *recon_grid(char **matrix, int rows, int cols)
 {
     if (matrix == NULL || rows <= 0 || cols <= 0) {
         return NULL;
@@ -20,7 +20,7 @@ Grid *reconstruction_build_grid(char **matrix, int rows, int cols)
     return g;
 }
 
-WordList *reconstruction_build_wordlist(char **strings, int n)
+WordList *recon_wordlist(char **strings, int n)
 {
     if (strings == NULL || n <= 0) {
         return NULL;
@@ -40,7 +40,7 @@ WordList *reconstruction_build_wordlist(char **strings, int n)
     return wl;
 }
 
-int reconstruction_apply_corrections(Grid *g)
+int recon_fix_ocr(Grid *g)
 {
     if (g == NULL) {
         return 0;

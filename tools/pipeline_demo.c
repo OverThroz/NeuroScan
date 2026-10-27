@@ -20,29 +20,29 @@ int main(void)
     int cols = 3;
 
     /* 2. RECONSTRUCTION ET CORRECTION (Toi) */
-    Grid *g = reconstruction_build_grid(ocr_matrix, rows, cols);
+    Grid *g = recon_grid(ocr_matrix, rows, cols);
     printf("--- 1. Sortie brute de l'OCR ---\n");
     grid_print(g);
 
-    int fixes = reconstruction_apply_corrections(g);
+    int fixes = recon_fix_ocr(g);
     printf("\n--- 2. Grille apres correction (%d erreurs corrigees) ---\n", fixes);
     grid_print(g);
 
     /* Liste de mots à chercher (simulant l'OCR de la liste de mots) */
     char *words[2] = { "CAT", "DOG" };
-    WordList *wl = reconstruction_build_wordlist(words, 2);
+    WordList *wl = recon_wordlist(words, 2);
 
     /* 3. RESOLUTION (Ton solver) */
     WordResult *results = solver_solve_all(g, wl);
 
     /* 4. CALCUL DES COORDONNEES (Toi, pour Louis) */
     /* On imagine que la grille commence au pixel (100, 100) et que les cases font 50x50 px */
-    GridGeometry geom = { 100.0, 100.0, 50.0, 50.0 };
+    GridGeom geom = { 100.0, 100.0, 50.0, 50.0 };
 
     printf("\n--- 3. Resultats du Solver et Coordonnees de Rendu ---\n");
     for (int i = 0; i < wl->count; i++) {
         if (results[i].pos.found) {
-            RenderBox box = render_calc_word_box(results[i].pos, geom);
+            BBox box = calc_word_box(results[i].pos, geom);
             printf("Mot '%s' trouve !\n", results[i].word);
             printf("  -> Grille : (x0=%d, y0=%d) a (x1=%d, y1=%d)\n",
                    results[i].pos.x0, results[i].pos.y0,
