@@ -1,24 +1,43 @@
+/*
+** EPITA - SAE S3 - 2026
+** Projet NeuroScan
+** Auteur : Maxime
+** Role   : Pont entre le Solver et l'interface graphique (Calcul de rendu)
+*/
+
 #ifndef RENDER_H
 #define RENDER_H
 
 #include "wordposition.h"
 
-/* Bounding box for drawing on the image. */
+/*
+** Boîte englobante (Bounding Box) utilisée par l'interface graphique (Louis)
+** pour dessiner les ellipses. On travaille en double pour la précision.
+** L'angle est en radians : 0 pour l'horizontal, PI/4 pour une diagonale, etc.
+*/
 typedef struct {
-    double x, y;       /* Top-left corner */
-    double w, h;       /* Width and height */
-    double angle;      /* Rotation in radians (0 = horizontal) */
-} RenderBox;
+    double x, y;       // Coin supérieur gauche
+    double w, h;       // Largeur et hauteur de la boîte
+    double angle;      // Rotation en radians
+} BBox;
 
-/* Position of the grid on the original image. */
+/*
+** Représente la position de la grille dans l'image source.
+** L'OCR doit fournir ces infos (où commence la grille, quelle taille font les cases).
+*/
 typedef struct {
-    double origin_x;   /* X pixel of grid's top-left corner */
-    double origin_y;   /* Y pixel of grid's top-left corner */
-    double cell_w;     /* Width of one cell in pixels */
-    double cell_h;     /* Height of one cell in pixels */
-} GridGeometry;
+    double origin_x;   // Coordonnée X du coin haut-gauche de la grille
+    double origin_y;   // Coordonnée Y du coin haut-gauche de la grille
+    double cell_w;     // Largeur d'une case en pixels
+    double cell_h;     // Hauteur d'une case en pixels
+} GridGeom;
 
-/* Calculate the pixel box for a found word. */
-RenderBox render_calc_word_box(WordPosition pos, GridGeometry geom);
+/*
+** Calcule la boîte englobante en pixels pour un mot trouvé.
+** Calcule le centre du mot, la distance entre les lettres (pour la largeur),
+** et utilise atan2() pour déterminer l'angle de rotation de l'ellipse.
+** C'est ce qui permet à Louis de dessiner un ovale même si le mot est en diagonale.
+*/
+BBox calc_word_box(WordPosition pos, GridGeom geom);
 
-#endif /* RENDER_H */
+#endif // RENDER_H

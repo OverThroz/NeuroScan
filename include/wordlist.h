@@ -1,22 +1,40 @@
+/*
+** EPITA - SAE S3 - 2026
+** Projet NeuroScan
+** Auteur : Maxime
+** Role   : Structure pour stocker la liste des mots à chercher
+*/
+
 #ifndef WORDLIST_H
 #define WORDLIST_H
 
+/*
+** Liste de mots dynamique.
+** On garde une trace de la capacite pour éviter de realloc à chaque ajout.
+** count = nombre de mots actuel, capacity = taille allouée.
+*/
 typedef struct {
     int    count;
     int    capacity;
-    char **words;
+    char **words; // Tableau de chaînes de caractères (char*)
 } WordList;
 
-/* Create an empty list with the given capacity. */
+/*
+** Constructeur : crée une liste vide. Si capacity <= 0, on met 1 par défaut.
+** Destructeur : libère chaque mot (strdup) puis le tableau.
+*/
 WordList *wordlist_create(int capacity);
-
-/* Append a copy of word. Returns 0 on success, -1 on failure. */
-int       wordlist_add(WordList *wl, const char *word);
-
-/* Free the list and all its words. */
 void      wordlist_free(WordList *wl);
 
-/* Return the word at index, or NULL if out of bounds. */
+/*
+** Ajoute un mot. On fait une copie profonde (strdup) pour que l'appelant 
+** n'ait pas à se soucier de la durée de vie de la chaîne passée en param.
+** Retourne 0 si succès, -1 si erreur d'allocation.
+** Gère l'agrandissement automatique (realloc) si la liste est pleine.
+*/
+int       wordlist_add(WordList *wl, const char *word);
+
+/* Récupère un mot par son index. Retourne NULL si l'index est invalide. */
 const char *wordlist_get(const WordList *wl, int index);
 
-#endif /* WORDLIST_H */
+#endif // WORDLIST_H

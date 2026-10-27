@@ -1,9 +1,9 @@
 #include "render.h"
 #include <math.h>
 
-RenderBox render_calc_word_box(WordPosition pos, GridGeometry geom)
+BBox calc_word_box(WordPosition pos, GridGeom geom)
 {
-    RenderBox box = {0, 0, 0, 0, 0};
+    BBox box = {0, 0, 0, 0, 0};
     
     /* Calculate pixel coordinates of the start and end cells (centers) */
     double x0 = geom.origin_x + (pos.x0 + 0.5) * geom.cell_w;
