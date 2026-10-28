@@ -15,6 +15,9 @@
 /tools/gui_main
 /src/solver/test3
 
+out_*.png
+preprocess
+
 # Build artifacts
 build/
 

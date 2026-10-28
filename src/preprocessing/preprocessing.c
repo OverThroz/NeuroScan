@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+//M_PI is not part of ISO C: define it when -std=c11 hides it.
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+
 // --- 1. CONVERSION EN NIVEAUX DE GRIS ---
 SDL_Surface* convert_to_grayscale(SDL_Surface *image) {
     // On s'assure d'avoir un format de pixel standard pour travailler facilement
@@ -129,3 +133,5 @@ SDL_Surface* rotate_image(SDL_Surface *image, double angle_degrees) {
 
     return result;
 }
+
+#endif
