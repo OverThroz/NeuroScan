@@ -1,8 +1,8 @@
 /*
 ** EPITA - SAE S3 - 2026
-** Projet NeuroScan
-** Auteur : Maxime
-** Role   : Pont entre le Solver et l'interface graphique (Calcul de rendu)
+** Project NeuroScan
+** Author : Maxime
+** Role   : Bridge between Solver and GUI (Rendering calculation)
 */
 
 #ifndef RENDER_H
@@ -11,32 +11,32 @@
 #include "wordposition.h"
 
 /*
-** Boîte englobante (Bounding Box) utilisée par l'interface graphique (Louis)
-** pour dessiner les ellipses. On travaille en double pour la précision.
-** L'angle est en radians : 0 pour l'horizontal, PI/4 pour une diagonale, etc.
+** Bounding Box used by the GUI (Louis) to draw ellipses.
+** We use doubles for precision.
+** Angle is in radians: 0 for horizontal, PI/4 for diagonal, etc.
 */
 typedef struct {
-    double x, y;       // Coin supérieur gauche
-    double w, h;       // Largeur et hauteur de la boîte
-    double angle;      // Rotation en radians
+    double x, y;       // Top-left corner
+    double w, h;       // Box width and height
+    double angle;      // Rotation in radians
 } BBox;
 
 /*
-** Représente la position de la grille dans l'image source.
-** L'OCR doit fournir ces infos (où commence la grille, quelle taille font les cases).
+** Represents the grid position in the source image.
+** The OCR must provide this info (where the grid starts, cell size).
 */
 typedef struct {
-    double origin_x;   // Coordonnée X du coin haut-gauche de la grille
-    double origin_y;   // Coordonnée Y du coin haut-gauche de la grille
-    double cell_w;     // Largeur d'une case en pixels
-    double cell_h;     // Hauteur d'une case en pixels
+    double origin_x;   // X coordinate of the grid's top-left corner
+    double origin_y;   // Y coordinate of the grid's top-left corner
+    double cell_w;     // Width of a cell in pixels
+    double cell_h;     // Height of a cell in pixels
 } GridGeom;
 
 /*
-** Calcule la boîte englobante en pixels pour un mot trouvé.
-** Calcule le centre du mot, la distance entre les lettres (pour la largeur),
-** et utilise atan2() pour déterminer l'angle de rotation de l'ellipse.
-** C'est ce qui permet à Louis de dessiner un ovale même si le mot est en diagonale.
+** Calculates the pixel bounding box for a found word.
+** Computes the word's center, distance between letters (for width),
+** and uses atan2() to determine the ellipse rotation angle.
+** This allows Louis to draw an oval even for diagonal words.
 */
 BBox calc_word_box(WordPosition pos, GridGeom geom);
 

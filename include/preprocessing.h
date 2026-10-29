@@ -1,26 +1,33 @@
+/*
+** EPITA - SAE S3 - 2026
+** Project NeuroScan
+** Author : Ibrahim
+** Role   : Image preprocessing (Grayscale, Binarization, Rotation)
+*/
+
 #ifndef PREPROCESSING_H
 #define PREPROCESSING_H
 
 #include <SDL2/SDL.h>
 
 /**
- * Convertit une image en niveaux de gris.
- * Retourne une nouvelle surface (pense à la libérer avec SDL_FreeSurface).
+ * Converts an image to grayscale.
+ * Returns a new surface (remember to free it with SDL_FreeSurface).
  */
-SDL_Surface* convert_to_grayscale(SDL_Surface *image);
+SDL_Surface *convert_to_grayscale(SDL_Surface *image);
 
 /**
- * Binarise l'image (Noir & Blanc strict).
- * Utilise la méthode d'Otsu pour trouver automatiquement le meilleur seuil.
- * Retourne une nouvelle surface binaire.
+ * Binarizes the image (strict black and white).
+ * Uses Otsu's method to automatically find the optimal threshold.
+ * Returns a new binary surface.
  */
-SDL_Surface* binarize_image(SDL_Surface *image);
+SDL_Surface *binarize_image(SDL_Surface *image);
 
 /**
- * Redresse l'image en appliquant une rotation d'un certain angle.
- * angle_degrees : angle en degrés (ex: 2.5, -1.0).
- * Retourne une nouvelle surface (la taille peut changer).
+ * Straightens the image by applying a rotation of a given angle.
+ * angle_degrees: angle in degrees (e.g., 2.5, -1.0).
+ * Returns a new surface (size may change).
  */
-SDL_Surface* rotate_image(SDL_Surface *image, double angle_degrees);
+SDL_Surface *rotate_image(SDL_Surface *image, double angle_degrees);
 
 #endif // PREPROCESSING_H

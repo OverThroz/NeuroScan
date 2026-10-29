@@ -1,8 +1,8 @@
 /*
 ** EPITA - SAE S3 - 2026
-** Projet NeuroScan
-** Auteur : Maxime
-** Role   : Moteur de recherche des mots (Algorithme des 8 directions)
+** Project NeuroScan
+** Author : Maxime
+** Role   : Word search engine (8-direction algorithm)
 */
 
 #ifndef SOLVER_H
@@ -13,27 +13,27 @@
 #include "wordposition.h"
 
 /*
-** Cherche UN mot dans la grille.
-** Algorithme naïf : on parcourt la grille, et dès qu'on trouve la première
-** lettre du mot, on lance une vérification dans les 8 directions 
-** (Haut, Bas, Gauche, Droite, et les 4 diagonales).
-** Complexité : O(N * M * 8 * L) avec L la longueur du mot.
-** Retourne une WordPosition avec found=0 si le mot n'est pas là.
+** Searches for ONE word in the grid.
+** Naive algorithm: iterate through the grid, and as soon as we find the
+** first letter of the word, check all 8 directions
+** (Up, Down, Left, Right, and the 4 diagonals).
+** Complexity: O(N * M * 8 * L) where L is the length of the word.
+** Returns a WordPosition with found=0 if the word is not present.
 */
 WordPosition solver_find_word(const Grid *g, const char *word);
 
 /*
-** Résout toute la liste de mots d'un coup.
-** Retourne un tableau de WordResult alloué dynamiquement.
-** C'est à l'appelant de free() le tableau retourné.
+** Solves the entire word list at once.
+** Returns a dynamically allocated array of WordResult.
+** The caller is responsible for freeing the returned array.
 */
 WordResult *solver_solve_all(const Grid *g, const WordList *wl);
 
 /*
-** Affiche le résultat formaté pour le CLI.
-** Le sujet exige "(x0,y0)(x1,y1)" ou "Not found". 
-** Si quiet == 1, on affiche STRICTEMENT ça (mode -q).
-** Si quiet == 0, on préfixe avec le mot pour faciliter le debug.
+** Prints the formatted result for the CLI.
+** The spec requires "(x0,y0)(x1,y1)" or "Not found".
+** If quiet == 1, print STRICTLY this format (-q mode).
+** If quiet == 0, prefix with the word to ease debugging.
 */
 void solver_print_result(const WordResult *r, int quiet);
 

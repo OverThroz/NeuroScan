@@ -1,8 +1,8 @@
 /*
 ** EPITA - SAE S3 - 2026
-** Projet NeuroScan
-** Auteur : Maxime
-** Role   : Pont entre l'OCR et le Solver (Reconstruction de la grille)
+** Project NeuroScan
+** Author : Maxime
+** Role   : Bridge between OCR and Solver (Grid reconstruction)
 */
 
 #ifndef RECONSTRUCTION_H
@@ -12,24 +12,24 @@
 #include "wordlist.h"
 
 /*
-** Prend la matrice de caractères brute sortie par l'OCR (Ibrahim) et la 
-** transforme en structure Grid propre à notre projet.
-** matrix : tableau de chaînes (ex: char *matrix[] = {"CAT", "DOG"}).
+** Takes the raw character matrix output by the OCR (Ibrahim) and
+** transforms it into a clean Grid structure for our project.
+** matrix: array of strings (e.g., char *matrix[] = {"CAT", "DOG"}).
 */
 Grid *recon_grid(char **matrix, int rows, int cols);
 
 /*
-** Fait la même chose mais pour la liste de mots.
-** Prend un tableau de chaînes de caractères et construit la WordList.
+** Does the same for the word list.
+** Takes an array of strings and builds the WordList.
 */
 WordList *recon_wordlist(char **strings, int n);
 
 /*
-** BONUS / ROBUSTESSE : Correction des erreurs d'OCR.
-** Le réseau de neurones confond souvent les lettres et les chiffres.
-** Cette fonction parcourt la grille et remplace les erreurs classiques :
+** BONUS / ROBUSTNESS: OCR error correction.
+** The neural network often confuses letters and numbers.
+** This function scans the grid and replaces common errors:
 ** '0' -> 'O', '1' -> 'I', '5' -> 'S', '8' -> 'B', etc.
-** Retourne le nombre de cellules qui ont été modifiées.
+** Returns the number of cells that were modified.
 */
 int recon_fix_ocr(Grid *g);
 
