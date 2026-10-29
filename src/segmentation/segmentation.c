@@ -216,7 +216,81 @@ int seg_save_box(SDL_Surface *src, struct box b, const char *path)
 	}
 }
 
+static int in_box(struct box b, int x, int y)
+{
+	if (x >= b.x && x < b.x +b.w)
+	{
+		if (y >= b.y && y < b.y + b.h)
+		{
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
 
+int seg_find_list(SDL_Surface *bw, struct box grid, struct box *list)
+{
+	int min_x = bw->w;
+	int max_x = -1;
+
+	int min_y = bw->h;
+	int max_y = -1;
+
+	for (int x = 0 ; x < bw->w ; x++)
+	{
+		for (int y = 0 ; y < bw->h ; y++)
+		{
+			if (in_box(grid,x,y) == 1)
+			{
+				continue;
+			}
+
+			if (is_black(bw,x,y) == 1)
+			{
+				if (x < min_x)
+				{
+					min_x = x;
+				}
+
+				if (y < min_y)
+				{
+					min_y = y;
+				}
+
+				if (x > max_x)
+				{
+					max_x = x;
+				}
+
+				if (y > max_y)
+				{
+					max_y = y;
+				}
+			}
+
+		}
+	}
+
+	if (max_x == -1 || max_y == -1)
+	{
+		return -1;
+	}
+
+	list->x = min_x;
+	list->y = min_y;
+
+	list->w = max_x - min_x +1;
+	list->h = max_y - min_y +1;
+
+	return 0;
+}
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -94,10 +94,34 @@ int main(void)
 	{
 		printf("size=%dx%d\n" ,taille->w, taille->h);
 	}
-	SDL_FreeSurface(s);
 	SDL_FreeSurface(taille);
+	SDL_FreeSurface(s);
 	image_quit();
+
+	printf("========== TEST 6 ==========\n");
+	SDL_Surface *s6 = SDL_CreateRGBSurfaceWithFormat(0,20,10,32,SDL_PIXELFORMAT_ARGB8888);
 	
+	SDL_FillRect(s6, NULL, SDL_MapRGB(s6->format, 255, 255, 255));
+	SDL_Rect g = {12,1,7,8};	//grid
+	SDL_Rect t1 = {1,2,5,2};	//text
+	SDL_Rect t2 = {2,6,4,1};	//text
+	SDL_FillRect(s6, &g, SDL_MapRGB(s6->format,0 ,0 ,0));
+	SDL_FillRect(s6, &t1, SDL_MapRGB(s6->format,0 ,0 ,0));
+	SDL_FillRect(s6, &t2, SDL_MapRGB(s6->format,0 ,0 ,0));
+
+	struct box grid = {12,1,7,8};
+	struct box list = {0,0,0,0};
+
+	int ret = seg_find_list(s6, grid, &list);
+	printf("ret=%d list: x=%d y=%d w=%d h=%d\n",
+			ret, list.x, list.y, list.w, list.h);
+
+	struct box all = {0,0,20,10};
+	ret = seg_find_list(s6, all, &list);
+	printf("ret=%d list: x=%d y=%d w=%d h=%d\n",
+                        ret, list.x, list.y, list.w, list.h);
+
+	SDL_FreeSurface(s6);
 	return 0;	
 
 }
