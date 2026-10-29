@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include <segmentation.h>
+#include "image.h"
 
 int main(void)
 {
@@ -75,7 +76,28 @@ int main(void)
         }
         free(rows);
 
+	printf("========== TEST 5 ==========\n");
+	image_init();
+	SDL_FillRect(s,NULL,SDL_MapRGB(s->format, 255, 255, 255));
+	struct box ok = {5,2,3,5};
+	struct box edge = {7,0,3,10};
+	struct box out = {8,8,5,5};
+	struct box flat = {2,2,0,4};
+
+	printf("ok: ret=%d\n", seg_save_box(s,ok, "/tmp/letter.png"));
+	printf("edge: ret=%d\n", seg_save_box(s,edge, "/tmp/edge.png"));
+	printf("out: ret=%d\n", seg_save_box(s,out, "/tmp/out.png"));
+	printf("flat: ret=%d\n", seg_save_box(s,flat, "/tmp/flat.png"));
+
+	SDL_Surface *taille = image_load("/tmp/letter.png");
+	if (taille != NULL)
+	{
+		printf("size=%dx%d\n" ,taille->w, taille->h);
+	}
 	SDL_FreeSurface(s);
+	SDL_FreeSurface(taille);
+	image_quit();
+	
 	return 0;	
 
 }

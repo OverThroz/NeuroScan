@@ -1,4 +1,5 @@
 #include "segmentation.h"
+#include "image.h"
 
 #include <stdlib.h>
 
@@ -183,4 +184,34 @@ struct box *seg_split_cols(SDL_Surface *bw, struct box area, size_t *count)
         }
 
         return bands;
+}
+
+
+int seg_save_box(SDL_Surface *src, struct box b, const char *path)
+{
+	if (b.w <= 0 || b.h <= 0 || b.x < 0 || b.y < 0 || b.x + b.w > src->w || b.y + b.h > src->h)
+	{
+		return -1;
+	}
+	SDL_Surface *cpy = SDL_CreateRGBSurfaceWithFormat(0,b.w,b.h,32,SDL_PIXELFORMAT_ARGB8888);
+	if (cpy == NULL)
+	{
+		return -1;
+	}
+
+	SDL_Rect r = {b.x,b.y,b.w,b.h};
+
+	int BlitSurface_res = SDL_BlitSurface(src,&r,cpy,NULL); 
+	//Copy the region of src described by b into cpy
+	int image_res = image_save(cpy,path);
+	if (image_res == 0 && BlitSurface_res == 0)
+	{
+		SDL_FreeSurface(cpy);
+		return 0;
+	}
+	else
+	{
+		SDL_FreeSurface(cpy);
+		return -1;
+	}
 }
