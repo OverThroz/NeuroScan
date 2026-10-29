@@ -215,3 +215,172 @@ int seg_save_box(SDL_Surface *src, struct box b, const char *path)
 		return -1;
 	}
 }
+
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include "segmentation.h"
+// Assuming image.h is included via segmentation.h for SDL_Surface and is_black
+
+#define LINE_THRESHOLD 0.8 // 80% of pixels must be black to be considered a line
+#define MARGIN_RATIO 0.1   // 10% margin on each side (total 20% removed)
+
+// --- HELPER FUNCTIONS ---
+
+// Counts the number of black pixels in a specific row within a given area
+static int row_black_count(SDL_Surface *bw, struct box area, int y) {
+    int count = 0;
+    for (int x = area.x; x < area.x + area.w; x++) {
+        if (is_black(bw, x, y)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// Counts the number of black pixels in a specific column within a given area
+static int col_black_count(SDL_Surface *bw, struct box area, int x) {
+    int count = 0;
+    for (int y = area.y; y < area.y + area.h; y++) {
+        if (is_black(bw, x, y)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// --- MAIN SEGMENTATION FUNCTIONS ---
+
+// Finds the bounding box of the main grid
+void seg_find_grid(SDL_Surface *s, struct box *grid) {
+    // Initialize grid to cover the whole image by default
+    grid->x = 0;
+    grid->y = 0;
+    grid->w = s->w;
+    grid->h = s->h;
+
+    // 1. Find Left Boundary
+    for (int x = 0; x < s->w; x++) {
+        int count = 0;
+        for (int y = 0; y < s->h; y++) {
+            if (is_black(s, x, y)) count++;
+        }
+        // If the column has more than 80% of black pixels, it's a grid line
+        if (count > s->h * LINE_THRESHOLD) {
+            grid->x = x;
+            break;
+        }
+    }
+
+    // 2. Find Right Boundary
+    for (int x = s->w - 1; x >= 0; x--) {
+        int count = 0;
+        for (int y = 0; y < s->h; y++) {
+            if (is_black(s, x, y)) count++;
+        }
+        if (count > s->h * LINE_THRESHOLD) {
+            grid->w = x - grid->x + 1;
+            break;
+        }
+    }
+
+    // 3. Find Top Boundary
+    for (int y = 0; y < s->h; y++) {
+        int count = 0;
+        for (int x = 0; x < s->w; x++) {
+            if (is_black(s, x, y)) count++;
+        }
+        if (count > s->w * LINE_THRESHOLD) {
+            grid->y = y;
+            break;
+        }
+    }
+
+    // 4. Find Bottom Boundary
+    for (int y = s->h - 1; y >= 0; y--) {
+        int count = 0;
+        for (int x = 0; x < s->w; x++) {
+            if (is_black(s, x, y)) count++;
+        }
+        if (count > s->w * LINE_THRESHOLD) {
+            grid->h = y - grid->y + 1;
+            break;
+        }
+    }
+}
+
+// Extracts the individual cells of the grid and returns an array of boxes
+struct box *seg_grid_cells(SDL_Surface *bw, struct box grid, int *rows, int *cols) {
+    // Allocate temporary arrays to store the coordinates of horizontal and vertical lines
+    // Max possible lines is bounded by the width/height of the grid
+    int *h_lines = malloc(sizeof(int) * grid.h);
+    int *v_lines = malloc(sizeof(int) * grid.w);
+    int h_count = 0;
+    int v_count = 0;
+
+    // 1. Find Horizontal Lines
+    for (int y = grid.y; y < grid.y + grid.h; y++) {
+        if (row_black_count(bw, grid, y) > grid.w * LINE_THRESHOLD) {
+            // Check if we are not on the same thick line (avoid duplicates)
+            if (h_count == 0 || y - h_lines[h_count - 1] > 5) {
+                h_lines[h_count++] = y;
+            }
+        }
+    }
+
+    // 2. Find Vertical Lines
+    for (int x = grid.x; x < grid.x + grid.w; x++) {
+        if (col_black_count(bw, grid, x) > grid.h * LINE_THRESHOLD) {
+            if (v_count == 0 || x - v_lines[v_count - 1] > 5) {
+                v_lines[v_count++] = x;
+            }
+        }
+    }
+
+    // Deduce rows and cols (number of lines minus 1)
+    *rows = h_count - 1;
+    *cols = v_count - 1;
+
+    // If detection failed, return NULL to avoid crashes
+    if (*rows <= 0 || *cols <= 0) {
+        free(h_lines);
+        free(v_lines);
+        return NULL;
+    }
+
+    // 3. Allocate the array of cells
+    struct box *cells = malloc((*rows) * (*cols) * sizeof(struct box));
+    if (!cells) {
+        free(h_lines);
+        free(v_lines);
+        return NULL;
+    }
+
+    // 4. Fill the array with individual cell bounding boxes
+    for (int r = 0; r < *rows; r++) {
+        for (int c = 0; c < *cols; c++) {
+            int idx = r * (*cols) + c;
+            
+            int raw_x = v_lines[c];
+            int raw_y = h_lines[r];
+            int raw_w = v_lines[c + 1] - v_lines[c];
+            int raw_h = h_lines[r + 1] - h_lines[r];
+
+            // Apply 20% total margin (10% on each side) to avoid grid lines
+            int margin_x = raw_w * MARGIN_RATIO;
+            int margin_y = raw_h * MARGIN_RATIO;
+
+            cells[idx].x = raw_x + margin_x;
+            cells[idx].y = raw_y + margin_y;
+            cells[idx].w = raw_w - (2 * margin_x);
+            cells[idx].h = raw_h - (2 * margin_y);
+        }
+    }
+
+    // Free temporary line arrays
+    free(h_lines);
+    free(v_lines);
+
+    return cells;
+}
