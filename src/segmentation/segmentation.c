@@ -206,7 +206,8 @@ int seg_find_grid(SDL_Surface *bw, struct box *grid)
 	return 1;
 }
 
-struct box *seg_grid_cells(SDL_Surface *bw, struct box grid, int *rows, int *cols)
+struct box *seg_grid_cells(SDL_Surface *bw,
+	       	struct box grid, int *rows, int *cols)
 {
 	int *h_lines = malloc(sizeof(int) * grid.h);
 	int *v_lines = malloc(sizeof(int) * grid.w);

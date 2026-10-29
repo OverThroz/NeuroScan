@@ -4,7 +4,7 @@
 BBox calc_word_box(WordPosition pos, GridGeom geom)
 {
     BBox box = {0, 0, 0, 0, 0};
-    
+
     /* Calculate pixel coordinates of the start and end cells (centers) */
     double x0 = geom.origin_x + (pos.x0 + 0.5) * geom.cell_w;
     double y0 = geom.origin_y + (pos.y0 + 0.5) * geom.cell_h;
@@ -23,7 +23,7 @@ BBox calc_word_box(WordPosition pos, GridGeom geom)
     /* Box size (add one cell length for padding around the word) */
     box.w = length + geom.cell_w;
     box.h = geom.cell_h * 0.8; /* Make it look like an ellipse */
-    
+
     /* Rotation angle */
     box.angle = atan2(dy, dx);
 

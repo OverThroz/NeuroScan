@@ -6,7 +6,7 @@
 int image_init(void)
 {
 	int type = IMG_INIT_PNG | IMG_INIT_JPG;
-	int ret = IMG_Init(type); 
+	int ret = IMG_Init(type);
 	if ((type & ret) != type)
 	{
 		fprintf(stderr, "image_init: %s\n", IMG_GetError());
@@ -26,7 +26,7 @@ SDL_Surface *image_load(const char *path)
 		fprintf(stderr, "image_load: %s: %s\n", path, IMG_GetError());
 		return NULL;
 	}
-	
+
 	SDL_Surface *conv = SDL_ConvertSurfaceFormat(igm,
 						SDL_PIXELFORMAT_ARGB8888, 0);
 	SDL_FreeSurface(igm);
@@ -44,7 +44,7 @@ int image_save(SDL_Surface *surface, const char *path)
 		fprintf(stderr, "image_save: %s: %s\n", path, IMG_GetError());
 		return -1;
 	}
-	else 
+	else
 	{
 		return 0;
 	}

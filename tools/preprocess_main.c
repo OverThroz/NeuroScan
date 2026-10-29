@@ -10,7 +10,7 @@ static int parse_angle(const char *str, double *angle)
 	{
 		return -1;
 	}
-	
+
 	char *end;
 	double val = strtod(str, &end);
 	if (end == str || *end != '\0')

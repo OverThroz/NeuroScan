@@ -67,7 +67,8 @@ int main(int argc, char **argv)
     WordList *wl = NULL;
     if (argc == 3) {
         /* Format imposé par le sujet : ./solver grille mot */
-        quiet = 1; /* En mode 1 mot, on force l'affichage strict (x0,y0)(x1,y1) */
+        quiet = 1; /* En mode 1 mot,
+		      on force l'affichage strict (x0,y0)(x1,y1) */
         wl = wordlist_create(1);
         if (wl) wordlist_add(wl, argv[2]);
     } else if (argc == 2) {

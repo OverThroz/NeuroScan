@@ -14,7 +14,7 @@
 
 int main(void)
 {
-    /* 
+    /*
      * 1. OCR SIMULATION (Ibrahim)
      * Assume the OCR misread the letters and put '0' and '1'.
      */

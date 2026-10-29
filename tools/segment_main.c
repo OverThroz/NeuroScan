@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	if (SDL_Init(0) != 0) 
+	if (SDL_Init(0) != 0)
 	{
 		fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
 		return EXIT_FAILURE;

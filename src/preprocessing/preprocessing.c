@@ -23,7 +23,7 @@ SDL_Surface *convert_to_grayscale(SDL_Surface *image)
     for (int i = 0; i < width * height; i++) {
         Uint8 r, g, b, a;
         SDL_GetRGBA(pixels[i], result->format, &r, &g, &b, &a);
-        
+
         Uint8 gray = (Uint8)(0.299 * r + 0.587 * g + 0.114 * b);
         pixels[i] = SDL_MapRGBA(result->format, gray, gray, gray, a);
     }
@@ -80,7 +80,7 @@ SDL_Surface *binarize_image(SDL_Surface *image)
     for (int i = 0; i < total_pixels; i++) {
         Uint8 r, g, b, a;
         SDL_GetRGBA(pixels[i], gray->format, &r, &g, &b, &a);
-        
+
         Uint8 val = (r > threshold) ? 255 : 0;
         pixels[i] = SDL_MapRGBA(gray->format, val, val, val, a);
     }

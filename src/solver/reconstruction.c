@@ -58,7 +58,7 @@ int recon_fix_ocr(Grid *g)
             else if (ch == '8') fixed = 'B';
             else if (ch == '6') fixed = 'G';
             else if (ch == '2') fixed = 'Z';
-            
+
             if (fixed != ch) {
                 g->cells[r][c] = fixed;
                 changes++;
