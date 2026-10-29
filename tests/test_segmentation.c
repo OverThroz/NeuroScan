@@ -43,6 +43,38 @@ int main(void)
                                 i,rows[i].x, rows[i].y, rows[i].w, rows[i].h);
         }
         free(rows);
+
+	printf("========== TEST 3 ==========\n");
+	SDL_FillRect(s,NULL,SDL_MapRGB(s->format,255,255,255));
+	SDL_Rect h1 = {1,2,2,5}; // cols 1-2
+	SDL_Rect h2 = {5,2,3,5}; // cols 5-7
+	SDL_FillRect(s, &h1, SDL_MapRGB(s->format, 0, 0, 0));
+	SDL_FillRect(s, &h2, SDL_MapRGB(s->format, 0, 0, 0));
+
+	rows = seg_split_cols(s, area, &count);
+	printf("count=%zu\n", count);
+        for (size_t i = 0; i < count ; i++)
+        {
+                printf("%zu: x=%d y=%d w=%d h=%d\n",
+                                i,rows[i].x, rows[i].y, rows[i].w, rows[i].h);
+        }
+        free(rows);
+	
+	printf("========== TEST 4 ==========\n");
+        SDL_FillRect(s,NULL,SDL_MapRGB(s->format,255,255,255));
+        SDL_Rect h3 = {7,2,3,5}; // cols 7-9 last letter
+        SDL_FillRect(s, &h3, SDL_MapRGB(s->format, 0, 0, 0));
+	struct box sub = { 2, 1, 8, 8 };
+
+        rows = seg_split_cols(s, sub, &count);
+        printf("count=%zu\n", count);
+        for (size_t i = 0; i < count ; i++)
+        {
+                printf("%zu: x=%d y=%d w=%d h=%d\n",
+                                i,rows[i].x, rows[i].y, rows[i].w, rows[i].h);
+        }
+        free(rows);
+
 	SDL_FreeSurface(s);
 	return 0;	
 
