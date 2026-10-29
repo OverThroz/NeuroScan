@@ -4,9 +4,11 @@
 # - C language, compiles without error with -Wall -Wextra
 # - Mandatory rules: all, clean
 
-CC      = cc
-CFLAGS  = -std=c11 -Wall -Wextra -Werror -pedantic -O2 -g -Iinclude
-LDFLAGS = -lm
+CC         = cc
+CFLAGS     = -std=c11 -Wall -Wextra -Werror -pedantic -O2 -g -Iinclude
+SDL_CFLAGS = $(shell pkg-config --cflags sdl2 SDL2_image)
+SDL_LIBS   = $(shell pkg-config --libs sdl2 SDL2_image)
+LDFLAGS    = -lm $(SDL_LIBS)
 
 ifeq ($(ASAN),1)
 CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -O0
@@ -16,67 +18,96 @@ endif
 SRC_DIR = src
 OBJ_DIR = obj
 
-# Common objects used by both solver and test binaries
-COMMON_SRC = $(SRC_DIR)/solver/grid.c \
-             $(SRC_DIR)/solver/wordlist.c \
-             $(SRC_DIR)/solver/solver.c \
-             $(SRC_DIR)/solver/reconstruction.c \
-             $(SRC_DIR)/solver/render.c
-COMMON_OBJ = $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+# --- OBJECTS ---
 
-SOLVER_BIN = solver
-SOLVER_OBJ = $(OBJ_DIR)/tools/solver_main.o
+# Solver & Data Structures objects
+SOLVER_OBJ = $(OBJ_DIR)/solver/grid.o \
+             $(OBJ_DIR)/solver/wordlist.o \
+             $(OBJ_DIR)/solver/solver.o \
+             $(OBJ_DIR)/solver/reconstruction.o \
+             $(OBJ_DIR)/solver/render.o
 
-TEST_BIN   = test_solver
-TEST_OBJ   = $(OBJ_DIR)/tests/test_solver.o
+# Image & Segmentation objects
+IMAGE_OBJ  = $(OBJ_DIR)/utils/image.o
+PREPRO_OBJ = $(OBJ_DIR)/preprocessing/preprocessing.o
+SEG_OBJ    = $(OBJ_DIR)/segmentation/segmentation.o
 
-TEST_RECON_BIN = test_reconstruction
-TEST_RECON_OBJ = $(OBJ_DIR)/tests/test_reconstruction.o
+# Main tools objects
+SOLVER_MAIN_OBJ   = $(OBJ_DIR)/tools/solver_main.o
+PIPELINE_MAIN_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
+SEGMENT_MAIN_OBJ  = $(OBJ_DIR)/tools/segment_main.o
 
-TEST_RENDER_BIN = test_render
+# Tests objects
+TEST_SOLVER_OBJ = $(OBJ_DIR)/tests/test_solver.o
+TEST_RECON_OBJ  = $(OBJ_DIR)/tests/test_reconstruction.o
 TEST_RENDER_OBJ = $(OBJ_DIR)/tests/test_render.o
+TEST_SEG_OBJ    = $(OBJ_DIR)/tests/test_segmentation.o
 
+# --- BINARIES ---
+
+SOLVER_BIN   = solver
 PIPELINE_BIN = pipeline_demo
-PIPELINE_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
+SEGMENT_BIN  = segment_main
+
+TEST_SOLVER_BIN = test_solver
+TEST_RECON_BIN  = test_reconstruction
+TEST_RENDER_BIN = test_render
+TEST_SEG_BIN    = test_segmentation
 
 .PHONY: all clean test
 
-all: $(SOLVER_BIN) $(PIPELINE_BIN)
+# By default, build the main executables
+all: $(SOLVER_BIN) $(PIPELINE_BIN) $(SEGMENT_BIN)
 
-$(SOLVER_BIN): $(COMMON_OBJ) $(SOLVER_OBJ)
+# --- LINKING RULES ---
+
+$(SOLVER_BIN): $(SOLVER_OBJ) $(SOLVER_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(TEST_BIN): $(COMMON_OBJ) $(TEST_OBJ)
+$(PIPELINE_BIN): $(SOLVER_OBJ) $(PIPELINE_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(TEST_RECON_BIN): $(COMMON_OBJ) $(TEST_RECON_OBJ)
+$(SEGMENT_BIN): $(SEG_OBJ) $(PREPRO_OBJ) $(IMAGE_OBJ) $(SEGMENT_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(TEST_RENDER_BIN): $(COMMON_OBJ) $(TEST_RENDER_OBJ)
+$(TEST_SOLVER_BIN): $(SOLVER_OBJ) $(TEST_SOLVER_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(PIPELINE_BIN): $(COMMON_OBJ) $(PIPELINE_OBJ)
+$(TEST_RECON_BIN): $(SOLVER_OBJ) $(TEST_RECON_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Generic rule for objects under src/
+$(TEST_RENDER_BIN): $(SOLVER_OBJ) $(TEST_RENDER_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(TEST_SEG_BIN): $(SEG_OBJ) $(PREPRO_OBJ) $(IMAGE_OBJ) $(TEST_SEG_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+# --- COMPILATION RULES ---
+
+# Generic rule for src/ (solver, utils, preprocessing, segmentation)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(SDL_CFLAGS) -c $< -o $@
 
-# Objects under tools/
+# Rule for tools/
 $(OBJ_DIR)/tools/%.o: tools/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(SDL_CFLAGS) -c $< -o $@
 
-# Objects under tests/
+# Rule for tests/
 $(OBJ_DIR)/tests/%.o: tests/%.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(SDL_CFLAGS) -c $< -o $@
 
-test: $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN)
-	./$(TEST_BIN)
+# --- ACTIONS ---
+
+test: $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(TEST_SEG_BIN)
+	./$(TEST_SOLVER_BIN)
 	./$(TEST_RECON_BIN)
 	./$(TEST_RENDER_BIN)
+	./$(TEST_SEG_BIN)
 
 clean:
-	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(TEST_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(PIPELINE_BIN)
+	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(PIPELINE_BIN) $(SEGMENT_BIN) \
+	       $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) \
+	       $(TEST_SEG_BIN)
