@@ -15,9 +15,6 @@
 /tools/gui_main
 /src/solver/test3
 
-out_*.png
-preprocess
-
 # Build artifacts
 build/
 
@@ -30,4 +27,6 @@ build/
 # NOTE: les fichiers "trsh" sont VOLONTAIREMENT versionnés
 # comme placeholders pour préserver l'arborescence vide dans Git.
 
-.token
+.tokenout/
+segment_main
+debug_binarized.png
