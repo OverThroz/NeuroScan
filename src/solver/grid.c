@@ -76,32 +76,74 @@ Grid *grid_load(const char *path)
         return NULL;
     }
 
+    char line[1024];
     int rows = 0;
     int cols = 0;
-    if (fscanf(f, "%d %d", &rows, &cols) != 2) {
+    char **temp_cells = NULL;
+
+    /* Read the first line */
+    if (fgets(line, sizeof(line), f) == NULL) {
         fclose(f);
         return NULL;
     }
+    
+    /* Remove newline characters */
+    line[strcspn(line, "\r\n")] = '\0';
 
-    Grid *g = grid_create(rows, cols);
-    if (g == NULL) {
-        fclose(f);
-        return NULL;
-    }
-
-    char buf[1024];
-    for (int r = 0; r < rows; r++) {
-        if (fscanf(f, "%1023s", buf) != 1) {
-            grid_free(g);
-            fclose(f);
-            return NULL;
+    /* Check if the first line contains dimensions (e.g., "5 5") */
+    int r, c;
+    if (sscanf(line, "%d %d", &r, &c) == 2) {
+        rows = r;
+        cols = c;
+        temp_cells = malloc(rows * sizeof(char*));
+        for (int i = 0; i < rows; i++) {
+            temp_cells[i] = calloc(cols + 1, sizeof(char));
+            if (fgets(line, sizeof(line), f)) {
+                line[strcspn(line, "\r\n")] = '\0';
+                for (int j = 0; j < cols && j < (int)strlen(line); j++) {
+                    temp_cells[i][j] = line[j];
+                }
+            }
         }
-        int len = (int)strlen(buf);
-        for (int c = 0; c < cols && c < len; c++) {
-            g->cells[r][c] = buf[c];
+    } else {
+        /* No header: the first line is the first row of the grid */
+        cols = strlen(line);
+        temp_cells = malloc(sizeof(char*));
+        temp_cells[0] = calloc(cols + 1, sizeof(char));
+        for (int j = 0; j < cols; j++) {
+            temp_cells[0][j] = line[j];
+        }
+        rows = 1;
+
+        while (fgets(line, sizeof(line), f)) {
+            line[strcspn(line, "\r\n")] = '\0';
+            if (strlen(line) == 0) continue; /* Skip empty lines */
+            
+            temp_cells = realloc(temp_cells, (rows + 1) * sizeof(char*));
+            temp_cells[rows] = calloc(cols + 1, sizeof(char));
+            for (int j = 0; j < cols && j < (int)strlen(line); j++) {
+                temp_cells[rows][j] = line[j];
+            }
+            rows++;
         }
     }
     fclose(f);
+
+    if (rows == 0 || cols == 0) {
+        free(temp_cells);
+        return NULL;
+    }
+
+    /* Build the final Grid */
+    Grid *g = grid_create(rows, cols);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            g->cells[i][j] = temp_cells[i][j];
+        }
+        free(temp_cells[i]);
+    }
+    free(temp_cells);
+
     return g;
 }
 

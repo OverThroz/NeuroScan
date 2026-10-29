@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 static void usage(const char *prog)
 {
@@ -66,13 +67,24 @@ int main(int argc, char **argv)
 
     WordList *wl = NULL;
     if (argc == 3) {
-	    /* Interface required by the subject: ./solver grid word */
-	    quiet = 1; /* En mode 1 mot,
-		      on force l'affichage strict (x0,y0)(x1,y1) */
+        /* Spec format: ./solver grid word */
+        quiet = 1; /* Force strict format: (x0,y0)(x1,y1) */
         wl = wordlist_create(1);
-        if (wl) wordlist_add(wl, argv[2]);
+        if (wl) {
+            /* Convert to uppercase for case-insensitive search */
+            size_t len = strlen(argv[2]);
+            char *word = malloc(len + 1);
+            if (word) {
+                for (size_t i = 0; i < len; i++) {
+                    word[i] = (char)toupper((unsigned char)argv[2][i]);
+                }
+                word[len] = '\0';
+                wordlist_add(wl, word);
+                free(word);
+            }
+        }
     } else if (argc == 2) {
-        /* Ancien format pour les tests : lit la liste dans le fichier */
+        /* Legacy format for tests: reads word list from the file */
         wl = load_words_after_grid(argv[1], g->rows);
     } else {
         usage(argv[0]);
