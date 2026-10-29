@@ -132,8 +132,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = seg_find_grid(bw, &grid);
-	/* IMPORTANT: ret is 1 on success, 0 on failure */
-	if (ret == 0 || grid.w <= 0 || grid.h <= 0)
+	if (ret != 0 || grid.w <= 0 || grid.h <= 0)
 	{
 		fprintf(stderr, "segment: grid not found\n");
 		SDL_FreeSurface(bw);
@@ -145,7 +144,7 @@ int main(int argc, char **argv)
 	size_t save_grid = save_grid_letters(bw, grid);
 
 	ret = seg_find_list(bw, grid, &list);
-	if (ret == -1)
+	if (ret != 0)
 	{
 		fprintf(stderr, "segment: list not found\n");
 		SDL_FreeSurface(bw);

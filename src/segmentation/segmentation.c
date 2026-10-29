@@ -198,12 +198,12 @@ int seg_find_grid(SDL_Surface *bw, struct box *grid)
 		if (count > bw->w * GRID_THRESHOLD) { bottom = y; break; }
 	}
 
-	if (left == -1 || right == -1 || top == -1 || bottom == -1) return 0;
+	if (left == -1 || right == -1 || top == -1 || bottom == -1) return -1;
 
 	grid->x = left; grid->y = top;
 	grid->w = right - left + 1;
 	grid->h = bottom - top + 1;
-	return 1;
+	return 0;
 }
 
 struct box *seg_grid_cells(SDL_Surface *bw,
