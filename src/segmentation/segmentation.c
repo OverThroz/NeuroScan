@@ -292,9 +292,7 @@ int seg_find_list(SDL_Surface *bw, struct box grid, struct box *list)
 	return 0;
 }
 
-#include <stdlib.h>
-#include <stdio.h>
-#include "segmentation.h"
+
 // Assuming image.h is included via segmentation.h for SDL_Surface and is_black
 
 #define LINE_THRESHOLD 0.8 // 80% of pixels must be black to be considered a line
@@ -327,61 +325,50 @@ static int col_black_count(SDL_Surface *bw, struct box area, int x) {
 // --- MAIN SEGMENTATION FUNCTIONS ---
 
 // Finds the bounding box of the main grid
-void seg_find_grid(SDL_Surface *s, struct box *grid) {
-    // Initialize grid to cover the whole image by default
-    grid->x = 0;
-    grid->y = 0;
-    grid->w = s->w;
-    grid->h = s->h;
+int seg_find_grid(SDL_Surface *bw, struct box *grid) {
+    // Initialize boundaries with impossible values to detect if they are found
+    int left = -1, right = -1, top = -1, bottom = -1;
 
     // 1. Find Left Boundary
-    for (int x = 0; x < s->w; x++) {
+    for (int x = 0; x < bw->w; x++) {
         int count = 0;
-        for (int y = 0; y < s->h; y++) {
-            if (is_black(s, x, y)) count++;
-        }
-        // If the column has more than 80% of black pixels, it's a grid line
-        if (count > s->h * LINE_THRESHOLD) {
-            grid->x = x;
-            break;
-        }
+        for (int y = 0; y < bw->h; y++) if (is_black(bw, x, y)) count++;
+        if (count > bw->h * LINE_THRESHOLD) { left = x; break; }
     }
 
     // 2. Find Right Boundary
-    for (int x = s->w - 1; x >= 0; x--) {
+    for (int x = bw->w - 1; x >= 0; x--) {
         int count = 0;
-        for (int y = 0; y < s->h; y++) {
-            if (is_black(s, x, y)) count++;
-        }
-        if (count > s->h * LINE_THRESHOLD) {
-            grid->w = x - grid->x + 1;
-            break;
-        }
+        for (int y = 0; y < bw->h; y++) if (is_black(bw, x, y)) count++;
+        if (count > bw->h * LINE_THRESHOLD) { right = x; break; }
     }
 
     // 3. Find Top Boundary
-    for (int y = 0; y < s->h; y++) {
+    for (int y = 0; y < bw->h; y++) {
         int count = 0;
-        for (int x = 0; x < s->w; x++) {
-            if (is_black(s, x, y)) count++;
-        }
-        if (count > s->w * LINE_THRESHOLD) {
-            grid->y = y;
-            break;
-        }
+        for (int x = 0; x < bw->w; x++) if (is_black(bw, x, y)) count++;
+        if (count > bw->w * LINE_THRESHOLD) { top = y; break; }
     }
 
     // 4. Find Bottom Boundary
-    for (int y = s->h - 1; y >= 0; y--) {
+    for (int y = bw->h - 1; y >= 0; y--) {
         int count = 0;
-        for (int x = 0; x < s->w; x++) {
-            if (is_black(s, x, y)) count++;
-        }
-        if (count > s->w * LINE_THRESHOLD) {
-            grid->h = y - grid->y + 1;
-            break;
-        }
+        for (int x = 0; x < bw->w; x++) if (is_black(bw, x, y)) count++;
+        if (count > bw->w * LINE_THRESHOLD) { bottom = y; break; }
     }
+
+    // Check if all boundaries were successfully found
+    if (left == -1 || right == -1 || top == -1 || bottom == -1) {
+        return 0; // Failure
+    }
+
+    // Fill the grid structure with the found coordinates
+    grid->x = left;
+    grid->y = top;
+    grid->w = right - left + 1;
+    grid->h = bottom - top + 1;
+
+    return 1; // Success
 }
 
 // Extracts the individual cells of the grid and returns an array of boxes
