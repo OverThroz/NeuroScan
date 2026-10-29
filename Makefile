@@ -36,6 +36,8 @@ SEG_OBJ    = $(OBJ_DIR)/segmentation/segmentation.o
 SOLVER_MAIN_OBJ   = $(OBJ_DIR)/tools/solver_main.o
 PIPELINE_MAIN_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
 SEGMENT_MAIN_OBJ  = $(OBJ_DIR)/tools/segment_main.o
+PREPRO_MAIN_OBJ = $(OBJ_DIR)/tools/preprocess_main.o
+NN_POC_MAIN_OBJ = $(OBJ_DIR)/tools/nn_poc_main.o
 
 # Tests objects
 TEST_SOLVER_OBJ = $(OBJ_DIR)/tests/test_solver.o
@@ -47,7 +49,9 @@ TEST_SEG_OBJ    = $(OBJ_DIR)/tests/test_segmentation.o
 
 SOLVER_BIN   = solver
 PIPELINE_BIN = pipeline_demo
-SEGMENT_BIN  = segment_main
+SEGMENT_BIN  = segment
+PREPRO_BIN = preprocess
+NN_POC_BIN = nn_poc
 
 TEST_SOLVER_BIN = test_solver
 TEST_RECON_BIN  = test_reconstruction
@@ -57,7 +61,8 @@ TEST_SEG_BIN    = test_segmentation
 .PHONY: all clean test
 
 # By default, build the main executables
-all: $(SOLVER_BIN) $(PIPELINE_BIN) $(SEGMENT_BIN)
+all: $(SOLVER_BIN) $(PIPELINE_BIN) \
+	$(SEGMENT_BIN) $(PREPRO_BIN) $(NN_POC_BIN)
 
 # --- LINKING RULES ---
 
@@ -77,6 +82,12 @@ $(TEST_RECON_BIN): $(SOLVER_OBJ) $(TEST_RECON_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(TEST_RENDER_BIN): $(SOLVER_OBJ) $(TEST_RENDER_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(PREPRO_BIN): $(PREPRO_OBJ) $(IMAGE_OBJ) $(PREPRO_MAIN_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(NN_POC_BIN): $(NN_POC_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(TEST_SEG_BIN): $(SEG_OBJ) $(PREPRO_OBJ) $(IMAGE_OBJ) $(TEST_SEG_OBJ)
@@ -110,4 +121,5 @@ test: $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(TEST_SEG_BIN)
 clean:
 	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(PIPELINE_BIN) $(SEGMENT_BIN) \
 	       $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) \
-	       $(TEST_SEG_BIN)
+	       $(TEST_SEG_BIN) $(PREPRO_BIN) $(NN_POC_BIN) \
+	       out out_gray.png out_bw.png out_rotated.png
