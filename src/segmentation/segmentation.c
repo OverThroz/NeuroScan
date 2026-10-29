@@ -170,32 +170,58 @@ static int col_black_count(SDL_Surface *bw, struct box area, int x) {
 	return count;
 }
 
+/* 
+ * NOUVELLES FONCTIONS : Calculent la plus longue suite continue de pixels noirs.
+ * C'est ce qui permet de différencier un trait de grille d'une colonne de texte.
+ */
+static int max_col_streak(SDL_Surface *bw, int x) {
+	int max_streak = 0, current_streak = 0;
+	for (int y = 0; y < bw->h; y++) {
+		if (is_black(bw, x, y)) {
+			current_streak++;
+			if (current_streak > max_streak) max_streak = current_streak;
+		} else {
+			current_streak = 0;
+		}
+	}
+	return max_streak;
+}
+
+static int max_row_streak(SDL_Surface *bw, int y) {
+	int max_streak = 0, current_streak = 0;
+	for (int x = 0; x < bw->w; x++) {
+		if (is_black(bw, x, y)) {
+			current_streak++;
+			if (current_streak > max_streak) max_streak = current_streak;
+		} else {
+			current_streak = 0;
+		}
+	}
+	return max_streak;
+}
+
 int seg_find_grid(SDL_Surface *bw, struct box *grid)
 {
 	int left = -1, right = -1, top = -1, bottom = -1;
 
+	// On utilise la plus longue suite continue (max_streak) au lieu du total de pixels noirs
+	int required_col = bw->h * GRID_THRESHOLD;
+	int required_row = bw->w * GRID_THRESHOLD;
+
 	for (int x = 0; x < bw->w; x++) {
-		int count = 0;
-		for (int y = 0; y < bw->h; y++) if (is_black(bw, x, y)) count++;
-		if (count > bw->h * GRID_THRESHOLD) { left = x; break; }
+		if (max_col_streak(bw, x) > required_col) { left = x; break; }
 	}
 
 	for (int x = bw->w - 1; x >= 0; x--) {
-		int count = 0;
-		for (int y = 0; y < bw->h; y++) if (is_black(bw, x, y)) count++;
-		if (count > bw->h * GRID_THRESHOLD) { right = x; break; }
+		if (max_col_streak(bw, x) > required_col) { right = x; break; }
 	}
 
 	for (int y = 0; y < bw->h; y++) {
-		int count = 0;
-		for (int x = 0; x < bw->w; x++) if (is_black(bw, x, y)) count++;
-		if (count > bw->w * GRID_THRESHOLD) { top = y; break; }
+		if (max_row_streak(bw, y) > required_row) { top = y; break; }
 	}
 
 	for (int y = bw->h - 1; y >= 0; y--) {
-		int count = 0;
-		for (int x = 0; x < bw->w; x++) if (is_black(bw, x, y)) count++;
-		if (count > bw->w * GRID_THRESHOLD) { bottom = y; break; }
+		if (max_row_streak(bw, y) > required_row) { bottom = y; break; }
 	}
 
 	if (left == -1 || right == -1 || top == -1 || bottom == -1) return -1;
