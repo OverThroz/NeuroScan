@@ -8,6 +8,8 @@ CC         = cc
 CFLAGS     = -std=c11 -Wall -Wextra -Werror -pedantic -O2 -g -Iinclude
 SDL_CFLAGS = $(shell pkg-config --cflags sdl2 SDL2_image)
 SDL_LIBS   = $(shell pkg-config --libs sdl2 SDL2_image)
+GTK_CFLAGS = $(shell pkg-config --cflags gtk+-3.0)
+GTK_LIBS   = $(shell pkg-config --libs gtk+-3.0)
 LDFLAGS    = -lm $(SDL_LIBS)
 
 ifeq ($(ASAN),1)
@@ -32,12 +34,16 @@ IMAGE_OBJ  = $(OBJ_DIR)/utils/image.o
 PREPRO_OBJ = $(OBJ_DIR)/preprocessing/preprocessing.o
 SEG_OBJ    = $(OBJ_DIR)/segmentation/segmentation.o
 
+# GUI objects
+GUI_OBJ = $(OBJ_DIR)/gui/gui.o
+
 # Main tools objects
 SOLVER_MAIN_OBJ   = $(OBJ_DIR)/tools/solver_main.o
 PIPELINE_MAIN_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
 SEGMENT_MAIN_OBJ  = $(OBJ_DIR)/tools/segment_main.o
 PREPRO_MAIN_OBJ = $(OBJ_DIR)/tools/preprocess_main.o
 NN_POC_MAIN_OBJ = $(OBJ_DIR)/tools/nn_poc_main.o
+GUI_MAIN_OBJ = $(OBJ_DIR)/tools/gui_main.o
 
 # Tests objects
 TEST_SOLVER_OBJ = $(OBJ_DIR)/tests/test_solver.o
@@ -52,6 +58,7 @@ PIPELINE_BIN = pipeline_demo
 SEGMENT_BIN  = segment
 PREPRO_BIN = preprocess
 NN_POC_BIN = nn_poc
+GUI_BIN = gui
 
 TEST_SOLVER_BIN = test_solver
 TEST_RECON_BIN  = test_reconstruction
@@ -62,7 +69,7 @@ TEST_SEG_BIN    = test_segmentation
 
 # By default, build the main executables
 all: $(SOLVER_BIN) $(PIPELINE_BIN) \
-	$(SEGMENT_BIN) $(PREPRO_BIN) $(NN_POC_BIN)
+	$(SEGMENT_BIN) $(PREPRO_BIN) $(NN_POC_BIN) $(GUI_BIN)
 
 # --- LINKING RULES ---
 
@@ -93,9 +100,17 @@ $(NN_POC_BIN): $(NN_POC_MAIN_OBJ)
 $(TEST_SEG_BIN): $(SEG_OBJ) $(PREPRO_OBJ) $(IMAGE_OBJ) $(TEST_SEG_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+$(GUI_BIN): $(GUI_OBJ) $(GUI_MAIN_OBJ) $(IMAGE_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(GTK_LIBS)
+
 # --- COMPILATION RULES ---
 
-# Generic rule for src/ (solver, utils, preprocessing, segmentation)
+# Generic rule for src/ (solver, utils, preprocessing, segmentation, gui)
+
+# GTK flags only for GUI files
+$(OBJ_DIR)/gui/%.o: CFLAGS += $(GTK_CFLAGS)
+$(OBJ_DIR)/tools/gui_main.o: CFLAGS += $(GTK_CFLAGS)
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(SDL_CFLAGS) -c $< -o $@
@@ -121,5 +136,5 @@ test: $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(TEST_SEG_BIN)
 clean:
 	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(PIPELINE_BIN) $(SEGMENT_BIN) \
 	       $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) \
-	       $(TEST_SEG_BIN) $(PREPRO_BIN) $(NN_POC_BIN) \
+	       $(TEST_SEG_BIN) $(PREPRO_BIN) $(NN_POC_BIN) $(GUI_BIN) \
 	       out out_gray.png out_bw.png out_rotated.png

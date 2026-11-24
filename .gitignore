@@ -29,6 +29,7 @@ a.out
 *.swp
 *~
 .vscode/
+compile_commands.json
 
 # NOTE: the "trsh" files are versioned on purpose, as placeholders
 # that keep empty folders in Git.
