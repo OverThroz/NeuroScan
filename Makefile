@@ -38,6 +38,9 @@ PIPELINE_MAIN_OBJ = $(OBJ_DIR)/tools/pipeline_demo.o
 SEGMENT_MAIN_OBJ  = $(OBJ_DIR)/tools/segment_main.o
 PREPRO_MAIN_OBJ = $(OBJ_DIR)/tools/preprocess_main.o
 NN_POC_MAIN_OBJ = $(OBJ_DIR)/tools/nn_poc_main.o
+# Neural Network objects
+NN_OBJ            = $(OBJ_DIR)/neural_net/neural_net.o
+NN_TRAIN_MAIN_OBJ = $(OBJ_DIR)/tools/nn_train_main.o
 
 # Tests objects
 TEST_SOLVER_OBJ = $(OBJ_DIR)/tests/test_solver.o
@@ -52,6 +55,7 @@ PIPELINE_BIN = pipeline_demo
 SEGMENT_BIN  = segment
 PREPRO_BIN = preprocess
 NN_POC_BIN = nn_poc
+NN_TRAIN_BIN = nn_train
 
 TEST_SOLVER_BIN = test_solver
 TEST_RECON_BIN  = test_reconstruction
@@ -62,7 +66,7 @@ TEST_SEG_BIN    = test_segmentation
 
 # By default, build the main executables
 all: $(SOLVER_BIN) $(PIPELINE_BIN) \
-	$(SEGMENT_BIN) $(PREPRO_BIN) $(NN_POC_BIN)
+     $(SEGMENT_BIN) $(PREPRO_BIN) $(NN_POC_BIN) $(NN_TRAIN_BIN)
 
 # --- LINKING RULES ---
 
@@ -88,6 +92,9 @@ $(PREPRO_BIN): $(PREPRO_OBJ) $(IMAGE_OBJ) $(PREPRO_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(NN_POC_BIN): $(NN_POC_MAIN_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(NN_TRAIN_BIN): $(NN_OBJ) $(NN_TRAIN_MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(TEST_SEG_BIN): $(SEG_OBJ) $(PREPRO_OBJ) $(IMAGE_OBJ) $(TEST_SEG_OBJ)
@@ -120,6 +127,9 @@ test: $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) $(TEST_SEG_BIN)
 
 clean:
 	rm -rf $(OBJ_DIR) $(SOLVER_BIN) $(PIPELINE_BIN) $(SEGMENT_BIN) \
-	       $(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) \
-	       $(TEST_SEG_BIN) $(PREPRO_BIN) $(NN_POC_BIN) \
-	       out out_gray.png out_bw.png out_rotated.png
+		$(TEST_SOLVER_BIN) $(TEST_RECON_BIN) $(TEST_RENDER_BIN) \
+		$(TEST_SEG_BIN) $(PREPRO_BIN) $(NN_POC_BIN) $(NN_TRAIN_BIN) \
+		out out_gray.png out_bw.png out_rotated.png weights.bin
+
+
+
