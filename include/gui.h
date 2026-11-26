@@ -4,17 +4,42 @@
 #include <gtk/gtk.h>
 #include <SDL2/SDL.h>
 
+#include "preprocessing.h"
+
 #define WINDOW_WIDTH 1180
 #define WINDOW_HEIGHT 780
 
 #define IMAGE_MAX_WIDTH 900
-#define IMAGE_MAX_HEIGHT 560
+#define IMAGE_MAX_HEIGHT 500
+
+enum step
+{
+    STEP_ORIGINAL,
+    STEP_GRAY,
+    STEP_BW,
+    STEP_ROTATE,
+    STEP_COUNT
+};
 
 /* Images and data of the current picture. */
 struct image
 {
     char *path;
     SDL_Surface *original;
+    SDL_Surface *gray;
+    SDL_Surface *bw;
+    SDL_Surface *rotated;
+    double angle;
+};
+
+struct work
+{
+    GtkWidget *title;
+    GtkWidget *info;
+    GtkWidget *view;
+    GtkWidget *rotate_scale;
+    GtkWidget *prev;
+    GtkWidget *next;
 };
 
 /* Widgets and data shared by every callback. */
@@ -22,8 +47,8 @@ struct app
 {
     GtkWidget *window;
     GtkWidget *stack;
-    GtkWidget *image;
-    GtkWidget *info;
+    int step;
+    struct work work;
     struct image img;
 };
 

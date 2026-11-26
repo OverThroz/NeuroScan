@@ -6,6 +6,7 @@
 #include "glib.h"
 #include "gtk/gtkcssprovider.h"
 #include "image.h"
+#include "preprocessing.h"
 
 #include <err.h>
 #include <gtk/gtk.h>
@@ -50,7 +51,17 @@ static const char *THEME_CSS =
 	".import-button:hover { background-color: #5a9cff;"
 	" box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); }"
 	".import-button:active { background-color: #1a46c4;"
-                        " box-shadow: none; }";
+                        " box-shadow: none; }"
+    ".step-title { font-size: 22px; font-weight: bold; }"
+    ".nav-button { padding: 10px 28px; font-size: 16px; }";
+
+static const char *STEP_NAMES[STEP_COUNT] =
+{
+    "Image importée",
+    "Niveaux de gris",
+    "Noir et blanc",
+    "Rotation"
+};
 
 //A comprendre et savoir expliquer
 //Une image c'est du RGBA et pb SDL range pas parei que GTK
@@ -73,6 +84,8 @@ static GdkPixbuf *surface_to_pixbuf(SDL_Surface *surface)
     return pixbuf;
 
 }
+
+
 
 static void show_surface(struct app *app, SDL_Surface *surface)
 {
@@ -109,8 +122,52 @@ static void show_surface(struct app *app, SDL_Surface *surface)
     scaled = gdk_pixbuf_scale_simple(full, width,height,
                     GDK_INTERP_BILINEAR); //creer une nouvelle iamge a la taille demander
     g_object_unref(full);
-    gtk_image_set_from_pixbuf(GTK_IMAGE(app->image), scaled);
+    gtk_image_set_from_pixbuf(GTK_IMAGE(app->work.view), scaled);
     g_object_unref(scaled);
+}
+
+
+static SDL_Surface *step_surface(struct app *app)
+{
+    if (app->step == STEP_GRAY)
+    {
+        return app->img.gray;
+    }
+
+    if (app->step == STEP_BW)
+    {
+        return app->img.bw;
+    }
+
+    if (app->step == STEP_ROTATE)
+    {
+        return app->img.rotated;
+    }
+    return app->img.original;
+}
+
+static void free_image(struct image *img)
+{
+    SDL_FreeSurface(img->original);
+    SDL_FreeSurface(img->gray);
+    SDL_FreeSurface(img->bw);
+    SDL_FreeSurface(img->rotated);
+    g_free(img->path);
+}
+
+//modif
+static void update_step(struct app *app)
+{
+    char *text;
+
+    text = g_strdup_printf("Étape %d / %d : %s", app->step +1,
+        STEP_COUNT, STEP_NAMES[app->step]);
+    gtk_label_set_text(GTK_LABEL(app->work.title), text);
+    g_free(text);
+    show_surface(app,step_surface(app));
+    gtk_widget_set_visible(app->work.rotate_scale, app->step == STEP_ROTATE);
+    gtk_widget_set_sensitive(app->work.prev, app->step > STEP_ORIGINAL); //on peut pas prev le debut
+    gtk_widget_set_sensitive(app->work.next, app->step < STEP_COUNT - 1); //on peut pas faire + que la fin
 }
 
 static GtkFileFilter *build_image_filter(void)
@@ -146,6 +203,26 @@ static char *choose_image(GtkWindow *parent)
 
 }
 
+static void on_angle_changed(GtkRange *range, gpointer data)
+{
+    struct app *app = data;
+    SDL_Surface *rotated;
+    double angle;
+
+    angle = gtk_range_get_value(range);
+    rotated = rotate_image(app->img.bw, angle);
+    if (rotated == NULL)
+    {
+        warnx("can not rotate the image");
+        return;
+    }
+    SDL_FreeSurface(app->img.rotated);
+    app->img.rotated = rotated;
+    app->img.angle = angle;
+    show_surface(app, app->img.rotated);
+
+}
+
 static void show_error(GtkWindow *parent , const char *message)
 {
     GtkWidget *dialog;
@@ -162,6 +239,9 @@ void on_clicked(GtkWidget *button, gpointer data)
     char *path;
     char *name;
     char *text;
+    SDL_Surface *gray;
+    SDL_Surface *bw;
+    SDL_Surface *rotated;
 
     (void)button;
     path = choose_image(GTK_WINDOW(app->window));
@@ -177,20 +257,62 @@ void on_clicked(GtkWidget *button, gpointer data)
         g_free(path);
         return;
     }
-    SDL_FreeSurface(app->img.original);
 
-    app->img.original = surface;
-    g_free(app->img.path);
+    gray = convert_to_grayscale(surface);
+    bw = binarize_image(surface);
+    rotated = rotate_image(bw, 0.0);
+    if (gray == NULL || bw == NULL || rotated == NULL)
+    {
+        show_error(GTK_WINDOW(app->window), "Mémoire insuffisante pour traiter cette image.");
+        SDL_FreeSurface(surface);
+        SDL_FreeSurface(gray);
+        SDL_FreeSurface(rotated);
+        g_free(path);
+        return;
+    }
+    free_image(&app->img);
     app->img.path = path;
+    app->img.original = surface;
+    app->img.gray = gray;
+    app->img.bw = bw;
+    app->img.rotated = rotated;
+    app->img.angle = 0.0;
 
-    show_surface(app, app->img.original);
+    gtk_range_set_value(GTK_RANGE(app->work.rotate_scale), 0.0);
+    app->step = STEP_ORIGINAL;
+    update_step(app);
+
     name = g_path_get_basename(path); //garde le nom du fichier
     text = g_strdup_printf("%s\n%d x %d pixels", name, surface->w, surface->h);
-    gtk_label_set_text(GTK_LABEL(app->info), text);
+    gtk_label_set_text(GTK_LABEL(app->work.info), text);
     g_free(name);
     g_free(text);
 
     gtk_stack_set_visible_child_name(GTK_STACK(app->stack), "work");
+}
+
+static void on_prev_clicked(GtkWidget *boutton, gpointer data)
+{
+    struct app *app = data;
+
+    (void)boutton;
+    if (app->step > STEP_ORIGINAL)
+    {
+        app->step = app->step -1;
+        update_step(app);
+    }
+
+}
+
+static void on_next_clicked(GtkWidget *boutton, gpointer data)
+{
+    struct app *app = data;
+    (void)boutton;
+      if (app->step < STEP_COUNT -1)
+    {
+        app->step = app->step + 1;
+        update_step(app);
+    }
 }
 
 GtkWidget *build_welcome(struct app *app)
@@ -233,18 +355,63 @@ GtkWidget *build_welcome(struct app *app)
 
 GtkWidget *build_work(struct app *app)
 {
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL,16);
-        gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
-        gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+    GtkWidget *box;
+    GtkWidget *bar;
+    GtkWidget *change;
 
-        app->image = gtk_image_new();
-	    gtk_container_add(GTK_CONTAINER(box), app->image);
+    //boite principae
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL,16);
+    gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
 
-        app->info = gtk_label_new("Aucune image");
-        gtk_label_set_justify(GTK_LABEL(app->info), GTK_JUSTIFY_CENTER);
-        gtk_container_add(GTK_CONTAINER(box), app->info);
+    //titre etape
+    app->work.title = gtk_label_new("");
+    gtk_style_context_add_class(gtk_widget_get_style_context(app->work.title), "step-title");
+    gtk_container_add(GTK_CONTAINER(box), app->work.title);
 
-        return box;
+    //image
+    app->work.view = gtk_image_new();
+	gtk_container_add(GTK_CONTAINER(box), app->work.view);
+
+    //texte info
+    app->work.info = gtk_label_new("Aucune image");
+    gtk_label_set_justify(GTK_LABEL(app->work.info), GTK_JUSTIFY_CENTER);
+    gtk_container_add(GTK_CONTAINER(box), app->work.info);
+
+    app->work.rotate_scale = gtk_scale_new_with_range(
+        GTK_ORIENTATION_HORIZONTAL, -45.0, 45.0, 1.0);
+    gtk_scale_set_digits(GTK_SCALE(app->work.rotate_scale), 0);
+    gtk_range_set_value(GTK_RANGE(app->work.rotate_scale), 0.0);
+    gtk_widget_set_size_request(app->work.rotate_scale, 400, -1);
+    gtk_widget_set_no_show_all(app->work.rotate_scale, TRUE);
+    g_signal_connect(app->work.rotate_scale, "value-changed", G_CALLBACK(on_angle_changed), app);
+    gtk_container_add(GTK_CONTAINER(box), app->work.rotate_scale);
+
+    //bar Horizontal
+    bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+    gtk_widget_set_halign(bar, GTK_ALIGN_CENTER);
+
+    //changer image
+    change = gtk_button_new_with_label("Changer d'image");
+    gtk_style_context_add_class(gtk_widget_get_style_context(change), "nav-button");
+    g_signal_connect(change, "clicked", G_CALLBACK(on_clicked), app);
+    gtk_container_add(GTK_CONTAINER(bar), change);
+
+    //bouton precedent
+    app->work.prev = gtk_button_new_with_label("Précédent");
+    gtk_style_context_add_class(gtk_widget_get_style_context(app->work.prev),"nav-button");
+    g_signal_connect(app->work.prev, "clicked", G_CALLBACK(on_prev_clicked), app);
+    gtk_container_add(GTK_CONTAINER(bar), app->work.prev);
+
+    //bouton suivant
+    app->work.next = gtk_button_new_with_label("Suivant");
+    gtk_style_context_add_class(gtk_widget_get_style_context(app->work.next),"nav-button");
+    g_signal_connect(app->work.next, "clicked", G_CALLBACK(on_next_clicked), app);
+    gtk_container_add(GTK_CONTAINER(bar), app->work.next);
+
+    gtk_container_add(GTK_CONTAINER(box), bar);
+
+    return box;
 }
 
 void load_theme(void)
@@ -290,12 +457,27 @@ int gui_run(int argc, char **argv)
 {
     struct app app;
     app.window = NULL;
-    app.info = NULL;
-    app.image = NULL;
-    app.stack = NULL;
-    app.img.original = NULL;
+	app.stack = NULL;
+	app.step = STEP_ORIGINAL;
+	app.work.title = NULL;
+	app.work.view = NULL;
+	app.work.info = NULL;
+	app.work.prev = NULL;
+	app.work.next = NULL;
+	app.img.path = NULL;
+	app.img.original = NULL;
+
+    app.work.rotate_scale = NULL;
+    app.img.gray = NULL;
+    app.img.bw = NULL;
+    app.img.rotated = NULL;
+    app.img.angle = 0.0;
 
     init_window(&argc, &argv, &app.window);
+    if (image_init() != 0)
+    {
+        errx(EXIT_FAILURE, "gui_run: cannot initialize SDL_image");
+    }
     app.img.path = NULL;
     load_theme();
 
@@ -313,7 +495,7 @@ int gui_run(int argc, char **argv)
     gtk_widget_show_all(app.window);
 	gtk_main(); // remplace  la boucle while de SDL
 
-    g_free(app.img.path);
-    SDL_FreeSurface(app.img.original);
+    free_image(&app.img);
+    image_quit();
     return EXIT_SUCCESS;
 }
