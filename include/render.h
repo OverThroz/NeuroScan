@@ -8,6 +8,8 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#include <SDL2/SDL.h>
+
 #include "wordposition.h"
 
 /*
@@ -39,5 +41,14 @@ typedef struct {
 ** This allows Louis to draw an oval even for diagonal words.
 */
 BBox calc_word_box(WordPosition pos, GridGeom geom);
+
+
+/*
+** Draws the outline of the ellipse inscribed in 'box' on 'image',
+** rotated by box.angle around its center. The line is 3 pixels
+** thick. Parts outside the image are ignored.
+** 'color' must be in the format of 'image' (use SDL_MapRGB).
+*/
+void draw_word_ellipse(SDL_Surface *image, BBox box, Uint32 color);
 
 #endif // RENDER_H

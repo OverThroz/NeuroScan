@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
 
 /* 8 directions: E, SE, S, SW, W, NW, N, NE. */
 static const int DX[8] = { 1,  1,  0, -1, -1, -1,  0,  1 };
